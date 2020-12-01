@@ -38,7 +38,7 @@ func helloHandler(w http.ResponseWriter, req *http.Request) {
 func main() {
 	otel := launcher.ConfigureOpentelemetry(
 		launcher.WithServiceName("hello-server-4"),
-		launcher.WithAccessToken("05137244f31c795a90417deceef6bc28"),
+		launcher.WithAccessToken("ACCESS TOKEN"),
 		launcher.WithPropagators([]string{"b3", "cc"}),
 		launcher.WithResourceAttributes(map[string]string{
 			"something":                      "else",
