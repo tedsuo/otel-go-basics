@@ -27,10 +27,10 @@ func main() {
 	// Create an OpenTelemetry SDK using the launcher
 	otel := launcher.ConfigureOpentelemetry(
 		launcher.WithServiceName("hello-server-4"),
-		launcher.WithAccessToken("ACCESS TOKEN"),
+		launcher.WithServiceVersion("1.3"),
+		launcher.WithAccessToken("PS4AExeR1V9kLHqtSIk6to3okwIEQ+4DZPEFmJAWQl+wMisnXWuYGAXjiERYT5pCIDV2nAY4eOYMau/r2iQ="),
 		launcher.WithPropagators([]string{"b3", "baggage"}),
 		launcher.WithResourceAttributes(map[string]string{
-			"something":                      "else",
 			string(semconv.ContainerNameKey): "my-container-name",
 		}),
 	)
@@ -48,16 +48,27 @@ func helloHandler(w http.ResponseWriter, req *http.Request) {
 	span := trace.SpanFromContext(cxt)
 	span.SetAttributes(semconv.HTTPRouteKey.String("hello"))
 
-	cxt, span = tracer.Start(cxt, "my-server-span")
+	// You can create child spans from the span in the current context.
+	// The returned context contains the new child span
+	cxt, span = tracer.Start(cxt, "my-child-span")
 	defer span.End()
 
+	// Use baggage to get the projectID set by the client
 	projectID := baggage.Value(cxt, "ProjectID")
+
+	// Set attributes to add indexes to you spans. This helps you group and
+	// compare traces.
 	span.SetAttributes(label.KeyValue{Key: "ProjectID", Value: projectID})
-	span.RecordError(errors.New("ooops"))
+
+	// Adding events is the tracing equivalent to logging.
+	// These events will show up as logs on the span.
 	span.AddEvent("writing response", trace.WithAttributes(
 		label.String("hello", "world"),
 		label.Int("answer", 42),
 	))
+
+	// Errors can be recorded as events
+	span.RecordError(errors.New("ooops"))
 
 	time.Sleep(time.Second)
 
